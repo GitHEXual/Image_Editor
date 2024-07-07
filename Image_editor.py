@@ -21,6 +21,7 @@ class ImageEditor:
         """
         try:
             self.image = Image.open(file_path)
+            self.image = self.image.convert("RGB")
 
         except Exception as e:
             print("Ошибка при загрузке изображения:", str(e))
@@ -56,8 +57,7 @@ class ImageEditor:
                 # Создаем объект изображения библиотеки Pillow
                 pil_image = Image.fromarray(frame_rgb)
 
-            return pil_image
-
+            return pil_image.convert("RGB")
 
         except Exception as e:
             print("Ошибка при загрузке изображения:", str(e))
@@ -85,30 +85,14 @@ class ImageEditor:
         :return:
         """
         try:
-            width, height = self.image.size
-            negative_image = Image.new(self.image.mode, (width, height))
-            pixels = self.image.load()
-            negative_pixels = negative_image.load()
-            for x in range(width):
-                for y in range(height):
-                    if len(pixels[x, y]) == 1:
-                        # Изображение с одним каналом цвета
-                        inverted_color = 255 - pixels[x, y]
-                        negative_pixels[x, y] = inverted_color
-                    elif len(pixels[x, y]) == 2:
-                        # Изображение с двумя каналами цвета
-                        r, g = pixels[x, y]
-                        inverted_color = (255 - r, 255 - g)
-                        negative_pixels[x, y] = inverted_color
-                    elif len(pixels[x, y]) >= 3:
-                        # Обычное изображение с тремя или четырьмя каналами цвета (RGB или RGBA)
-                        r, g, b = pixels[x, y][:3]
-                        inverted_color = (255 - r, 255 - g, 255 - b)
-                        negative_pixels[x, y] = inverted_color
-                    else:
-                        # Неожиданное количество каналов цвета, игнорируем пиксель
-                        negative_pixels[x, y] = pixels[x, y]
-            self.image = negative_image
+            draw = ImageDraw.Draw(self.image)
+            pix = self.image.load()
+            for x in range(self.image.width):
+                for y in range(self.image.height):
+                    r = pix[x, y][0]
+                    g = pix[x, y][1]
+                    b = pix[x, y][2]
+                    draw.point((x, y), (255 - r, 255 - g, 255 - b))
         except Exception as e:
             print(str(e))
 
@@ -155,3 +139,22 @@ class ImageEditor:
         """
 
         self.image.save(file_path)
+
+    def image_channel(self, channel):
+        """
+        Получение канала изображения
+        :param channel: Индекс выбранного канала
+        :return: Красный, зелёный или синий канал изображения
+        """
+        try:
+            image = self.image.convert("RGB")
+            red, green, blue = image.split()
+            empty_pixels = red.point(lambda _: 0)
+            red_merge = Image.merge("RGB", (red, empty_pixels, empty_pixels))
+            green_merge = Image.merge("RGB", (empty_pixels, green, empty_pixels))
+            blue_merge = Image.merge("RGB", (empty_pixels, empty_pixels, blue))
+            channels_list = [red_merge, green_merge, blue_merge]
+            return channels_list[channel]
+
+        except Exception as e:
+            print(str(e))

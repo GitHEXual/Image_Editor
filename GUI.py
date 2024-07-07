@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QMessageBox, QMainWindow, \
 from PyQt5.QtGui import QPixmap, QImage, QIntValidator
 from PyQt5.QtCore import Qt
 from Image_editor import ImageEditor
-from Image_editor import Image
 
 
 def convert_pil_to_qimage(pil_image):
@@ -69,7 +68,7 @@ class ImageEditorWindow(QMainWindow):
         layout.addWidget(self.channel_combo)
 
         self.negative_button = QPushButton("Создать негативное изображение")
-        self.negative_button.clicked.connect(self.resize_image)
+        self.negative_button.clicked.connect(self.negative_image)
         self.negative_button.setEnabled(False)
         layout.addWidget(self.negative_button)
 
@@ -157,8 +156,6 @@ class ImageEditorWindow(QMainWindow):
             self.update_buttons_state()
             self.show_image()
 
-
-
     def update_image_channel(self):
         """
         Обновляет отображаемый канал изображения
@@ -178,16 +175,7 @@ class ImageEditorWindow(QMainWindow):
         """
         try:
             if self.image_editor.image:
-                image = self.image_editor.image
-                red, green, blue = image.split()
-                empty_pixels = red.point(lambda _:0)
-                red_img = Image.merge("RGB", (red, empty_pixels,
-                                                         empty_pixels))
-                green_img = Image.merge("RGB", (empty_pixels, green,
-                                                         empty_pixels))
-                blue_img = Image.merge("RGB", (empty_pixels, empty_pixels,
-                                                       blue))
-                channel_image = [red_img, green_img, blue_img][channel - 1]
+                channel_image = self.image_editor.image_channel(channel - 1)
                 qimage = convert_pil_to_qimage(channel_image)
                 pixmap = QPixmap.fromImage(qimage)
                 scaled_pixmap = pixmap.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -197,7 +185,7 @@ class ImageEditorWindow(QMainWindow):
         except Exception as e:
             print(str(e))
 
-    def resize_image(self):
+    def negative_image(self):
         """
         метод для создания негативного изабражения
         :return:
@@ -238,11 +226,12 @@ class ImageEditorWindow(QMainWindow):
         """
         try:
 
-            file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить изображение", "", "Images (*.png *.jpg *.jpeg)")
+            file_path, _ = QFileDialog.getSaveFileName(self, "Сохранить изображение", "", "Images (*.png *.jpg)")
 
             if file_path:
                 self.image_editor.save_image(file_path)
                 self.label.setText("Изображение сохранено")
+
         except Exception as e:
             error = QMessageBox()
             error.setWindowTitle("Ошибка!!!")

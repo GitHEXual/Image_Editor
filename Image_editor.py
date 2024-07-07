@@ -63,20 +63,6 @@ class ImageEditor:
             print("Ошибка при загрузке изображения:", str(e))
             return None
 
-    def split_channels(self):
-        """
-        Разделение изображения на отдельные цветовые каналы
-        :return: Список изображений
-        """
-        return self.image.split()
-
-    def show_image(self):
-        """
-        Отображает изображение
-        :return:
-        """
-        self.image.show()
-
     def negative_image(self):
         """
         Создание негативного изображения
